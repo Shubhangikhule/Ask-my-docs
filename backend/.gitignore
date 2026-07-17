@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+
+# Environment Variables
+.env
+
+# ChromaDB
+chroma_db/
+
+# Uploaded Files
+uploads/
+
+# VS Code
+.vscode/
+
+# Node Modules
+node_modules/
