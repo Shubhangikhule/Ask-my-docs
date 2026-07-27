@@ -6,6 +6,7 @@ import SourceCard from "./SourceCard";
 import CopyButton from "./CopyButton";
 import ThinkingIndicator from "./ThinkingIndicator";
 import TypingAnswer from "./TypingAnswer";
+import { UploadContext } from "../../context/UploadContext";
 import {
   exportAsPDF,
   exportAsMarkdown,
@@ -20,6 +21,7 @@ function ChatWindow({ messages, setMessages }) {
   const messagesEndRef = useRef(null);
   const { theme, toggleTheme } =
   useContext(ThemeContext);
+  const { activeDocument } = useContext(UploadContext);
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -71,7 +73,10 @@ setMessages(updatedMessages);
 setMessages(thinkingMessages);
 
     try {
-      const response = await askQuestion(currentQuestion);
+      const response = await askQuestion(
+      currentQuestion,
+      activeDocument
+    );
 
        const finalMessages = [...thinkingMessages];
 

@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import Sidebar from "../sidebar/Sidebar";
 import ChatWindow from "../chat/ChatWindow";
 import { ThemeContext } from "../../context/ThemeContext";
-
+import { newChat } from "../../services/chatService";
 function MainLayout() {
   const { theme } = useContext(ThemeContext);
   const [conversations, setConversations] = useState(() => {
@@ -43,21 +43,29 @@ function MainLayout() {
         conversation.id === activeConversationId
     ) || conversations[0];
 
-  const handleNewChat = () => {
-    const newConversation = {
-      id: Date.now(),
-      title: "New Chat",
-      messages: [],
-    };
+  const handleNewChat = async () => {
+    await newChat();  
+  // If the current chat is already empty,
+  // don't create another conversation.
+  if (activeConversation.messages.length === 0) {
+    return;
+  }
 
-    setConversations((previous) => [
-      ...previous,
-      newConversation,
-    ]);
-
-    setActiveConversationId(newConversation.id);
+  const newConversation = {
+    id: Date.now(),
+    title: "New Chat",
+    messages: [],
+    lastMessage: "",
+    updatedAt: new Date().toISOString(),
   };
 
+  setConversations((previous) => [
+    ...previous,
+    newConversation,
+  ]);
+
+  setActiveConversationId(newConversation.id);
+};
   const handleDeleteConversation = (conversationId) => {
   setConversations((previous) => {
     const updated = previous.filter(
@@ -68,10 +76,12 @@ function MainLayout() {
     // create a fresh New Chat
     if (updated.length === 0) {
       const newConversation = {
-        id: Date.now(),
-        title: "New Chat",
-        messages: [],
-      };
+      id: Date.now(),
+      title: "New Chat",
+      messages: [],
+      lastMessage: "",
+      updatedAt: new Date().toISOString(),
+    };
 
      
       setActiveConversationId(newConversation.id);
@@ -101,6 +111,19 @@ function MainLayout() {
   );
 };
 
+const handleClearAllConversations = () => {
+  const newConversation = {
+    id: Date.now(),
+    title: "New Chat",
+    messages: [],
+    lastMessage: "",
+    updatedAt: new Date().toISOString(),
+  };
+
+  setConversations([newConversation]);
+  setActiveConversationId(newConversation.id);
+};
+
   const updateMessages = (messages) => {
   setConversations((previous) =>
     previous.map((conversation) => {
@@ -122,14 +145,22 @@ function MainLayout() {
             : messages[0].text;
       }
 
-      return {
-        ...conversation,
-        title,
-        messages,
-      };
-    })
-  );
-};
+      const lastUserMessage = [...messages]
+       .reverse()
+       .find((message) => message.sender === "user");
+
+    return {
+       ...conversation,
+       title,
+       messages,
+       lastMessage: lastUserMessage
+       ? lastUserMessage.text
+       : "",
+       updatedAt: new Date().toISOString(),
+       };
+     })
+   );
+  };
 
   return (
     <div
@@ -146,6 +177,7 @@ function MainLayout() {
         onNewChat={handleNewChat}
         onDeleteConversation={handleDeleteConversation}
         onRenameConversation={handleRenameConversation}
+        onClearAllConversations={handleClearAllConversations}
 />
 
       <ChatWindow

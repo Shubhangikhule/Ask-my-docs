@@ -3,8 +3,7 @@ from services.pdf_service import extract_text_from_pdf
 from services.chunk_service import chunk_text
 from services.embedding_service import create_embeddings
 from services.vector_store import store_embeddings
-from services.bm25_service import build_bm25
-
+from services.bm25_service import build_bm25, delete_document
 import os
 import shutil
 
@@ -75,3 +74,27 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     finally:
         file.file.close()
+
+@router.delete("/delete/{filename}")
+async def delete_pdf(filename: str):
+    from services.vector_store import get_collection
+
+    collection = get_collection()
+
+    # Delete from ChromaDB
+    collection.delete(
+        where={"filename": filename}
+    )
+
+    # Delete from BM25
+    delete_document(filename)
+
+    # Delete uploaded file
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    return {
+        "message": f"{filename} deleted successfully"
+    }

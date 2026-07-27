@@ -3,6 +3,10 @@ import { Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { uploadPDF } from "../../services/uploadService";
 import { UploadContext } from "../../context/UploadContext";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 function UploadPanel() {
   
@@ -14,8 +18,16 @@ function UploadPanel() {
   setUploadProgress,
   uploading,
   setUploading,
-  uploadedFile,
-  setUploadedFile,
+  uploadedFiles,
+  setUploadedFiles,
+  pdfThumbnail,
+  setPdfThumbnail,
+  pdfUrl,
+  setPdfUrl,
+  viewerOpen,
+  setViewerOpen,
+  activeDocument,
+  setActiveDocument,
 } = useContext(UploadContext);
 
   const handleButtonClick = () => {
@@ -44,13 +56,27 @@ function UploadPanel() {
       setUploadProgress(100);
 
       toast.success(result.message || "PDF uploaded successfully!");
-      setUploadedFile({
-      name: file.name,
-      uploadedAt: new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-   }),
- });
+      const thumbnail = await generateThumbnail(file);
+
+      const newFile = {
+  id: Date.now(),
+  name: file.name,
+  uploadedAt: new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
+  url: URL.createObjectURL(file),
+  thumbnail: thumbnail,
+};
+
+setPdfThumbnail(thumbnail);
+
+setUploadedFiles((previous) => [
+  ...previous,
+  newFile,
+]);
+
+setActiveDocument(newFile);
 
       setTimeout(() => {
         setUploading(false);
@@ -121,6 +147,33 @@ const handleDrop = async (e) => {
     setUploading(false);
     setUploadProgress(0);
   }
+};
+const generateThumbnail = async (file) => {
+  const arrayBuffer = await file.arrayBuffer();
+
+  const pdf = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+  }).promise;
+
+  const page = await pdf.getPage(1);
+
+  const viewport = page.getViewport({
+    scale: 1.2,
+  });
+
+  const canvas = document.createElement("canvas");
+
+  const context = canvas.getContext("2d");
+
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  await page.render({
+    canvasContext: context,
+    viewport,
+  }).promise;
+
+  return canvas.toDataURL("image/png");
 };
 
   return (

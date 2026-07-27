@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from services.search_service import search_documents
 from services.llm_service import generate_answer
-from services.memory_service import add_message
+from services.memory_service import add_message, clear_history
 from services.rewrite_service import rewrite_question
 from services.query_expansion_service import expand_query
 
@@ -14,10 +14,14 @@ router = APIRouter()
 
 class ChatRequest(BaseModel):
     question: str
+    document_name: str | None = None
 
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
+
+    print("Selected document:", request.document_name, flush=True)
+
 
     # Start timer
     start_time = time.perf_counter()
@@ -42,8 +46,10 @@ async def chat(request: ChatRequest):
     # -----------------------------------
     # Retrieve relevant chunks
     # -----------------------------------
-    results = search_documents(expanded_queries)
-
+    results = search_documents(
+        expanded_queries,
+        document_name=request.document_name
+    )
     # -----------------------------------
     # Build context
     # -----------------------------------
@@ -59,6 +65,11 @@ async def chat(request: ChatRequest):
         question=rewritten_question,
         context=context
     )
+
+    # If the LLM couldn't find an answer,
+    # don't return any sources.
+    if answer.strip() == "I could not find the answer in the uploaded document.":
+       results = []
 
     # -----------------------------------
     # Save conversation
@@ -124,3 +135,11 @@ async def chat(request: ChatRequest):
         "retrieved_chunks": len(results),
         "response_time_ms": response_time_ms
     }
+
+@router.post("/chat/new")
+async def new_chat():
+    clear_history()
+
+    return {
+        "message": "Conversation cleared"
+}

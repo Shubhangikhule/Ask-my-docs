@@ -5,7 +5,11 @@ from services.reranker_service import rerank_results
 
 print("SEARCH SERVICE FILE LOADED", flush=True)
 
-def search_documents(queries: list[str], top_k: int = 3):
+def search_documents(
+    queries: list[str],
+    document_name: str | None = None,
+    top_k: int = 3,
+):
     """
     Hybrid Search using multiple expanded queries.
 
@@ -16,6 +20,7 @@ def search_documents(queries: list[str], top_k: int = 3):
     4. Remove Duplicates
     5. Cross-Encoder Re-ranking
     """
+    print("DOCUMENT FILTER =", document_name, flush=True)
 
     print(
         "\n========== SEARCH SERVICE STARTED ==========",
@@ -47,10 +52,17 @@ def search_documents(queries: list[str], top_k: int = 3):
         # Vector Search
         # -----------------------------
 
-        vector_results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=10
-        )
+        query_args = {
+           "query_embeddings": [query_embedding],
+           "n_results": 10,
+        }
+
+        if document_name:
+         query_args["where"] = {
+            "filename": document_name
+       } 
+
+        vector_results = collection.query(**query_args)
 
         documents = vector_results["documents"][0]
         metadatas = vector_results["metadatas"][0]
@@ -109,8 +121,9 @@ def search_documents(queries: list[str], top_k: int = 3):
         # -----------------------------
 
         bm25_results = search_bm25(
-            query,
-            top_k=10
+          query,
+          document_name=document_name,
+          top_k=10
         )
 
 

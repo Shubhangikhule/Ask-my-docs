@@ -2,7 +2,7 @@ from groq import Groq
 
 from config import settings
 
-client = Groq(api_key=settings.GROQ_API_KEY)
+
 
 
 def expand_query(question: str) -> list[str]:
@@ -43,7 +43,7 @@ Rules:
 Question:
 {question}
 """
-
+    client = Groq(api_key=settings.GROQ_API_KEY)
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         temperature=0,

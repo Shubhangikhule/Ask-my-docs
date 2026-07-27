@@ -18,3 +18,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+print(
+    "GROQ KEY:",
+    settings.GROQ_API_KEY[:10] + "..."
+    if settings.GROQ_API_KEY
+    else "NOT FOUND",
+    flush=True
+)

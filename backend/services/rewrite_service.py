@@ -4,7 +4,6 @@ from config import settings
 from services.memory_service import get_history
 from services.question_utils import needs_rewrite
 
-client = Groq(api_key=settings.GROQ_API_KEY)
 
 
 def rewrite_question(question: str) -> str:
@@ -51,6 +50,9 @@ return it EXACTLY as it is.
             "content": question
         }
     )
+
+    client = Groq(api_key=settings.GROQ_API_KEY)
+
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",

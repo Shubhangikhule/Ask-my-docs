@@ -1,26 +1,39 @@
 import { useEffect, useState } from "react";
 import AnswerRenderer from "./AnswerRenderer";
+import { useContext } from "react";
+import { SettingsContext } from "../../context/SettingsContext";
 
 function TypingAnswer({ text }) {
+  const { typingEnabled } = useContext(SettingsContext);
   const [displayText, setDisplayText] = useState("");
 
   useEffect(() => {
-    setDisplayText("");
+  // If typing animation is OFF,
+  // show the full answer immediately.
+  if (!typingEnabled) {
+    setDisplayText(text);
+    return;
+  }
 
-    const words = text.split(" ");
-    let index = 0;
+  // If typing animation is ON,
+  // animate word by word.
+  setDisplayText("");
 
-    const timer = setInterval(() => {
-      setDisplayText(words.slice(0, index + 1).join(" "));
-      index++;
+  const words = text.split(" ");
+  let index = 0;
 
-      if (index >= words.length) {
-        clearInterval(timer);
-      }
-    }, 40);
+  const timer = setInterval(() => {
+    setDisplayText(words.slice(0, index + 1).join(" "));
+    index++;
 
-    return () => clearInterval(timer);
-  }, [text]);
+    if (index >= words.length) {
+      clearInterval(timer);
+    }
+  }, 40);
+
+  return () => clearInterval(timer);
+
+}, [text, typingEnabled]);
 
   return (
     <AnswerRenderer
