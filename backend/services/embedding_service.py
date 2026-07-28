@@ -1,14 +1,19 @@
 from langchain_huggingface import HuggingFaceEmbeddings
 
-# Load embedding model (downloads automatically the first time)
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+_embedding_model = None
+
+
+def get_embedding_model():
+    global _embedding_model
+
+    if _embedding_model is None:
+        _embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return _embedding_model
 
 
 def create_embeddings(texts: list[str]):
-    """
-    Convert a list of text chunks into embeddings.
-    """
-    embeddings = embedding_model.embed_documents(texts)
-    return embeddings
+    model = get_embedding_model()
+    return model.embed_documents(texts)
