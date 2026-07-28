@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
-    # Gemini
+    # Groq
     GROQ_API_KEY: str
 
     # Load .env file
@@ -18,10 +18,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print(
-    "GROQ KEY:",
-    settings.GROQ_API_KEY[:10] + "..."
-    if settings.GROQ_API_KEY
-    else "NOT FOUND",
-    flush=True
-)
