@@ -1,7 +1,17 @@
 from sentence_transformers import CrossEncoder
 
-# Load the model only once
-model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+_model = None
+
+
+def get_model():
+    global _model
+
+    if _model is None:
+        _model = CrossEncoder(
+            "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        )
+
+    return _model
 
 
 def rerank_results(
@@ -17,20 +27,18 @@ def rerank_results(
     if not results:
         return []
 
-    # Build (query, document) pairs
+    model = get_model()
+
     pairs = [
         (query, item["document"])
         for item in results
     ]
 
-    # Predict relevance scores
     scores = model.predict(pairs)
 
-    # Attach scores
     for item, score in zip(results, scores):
         item["rerank_score"] = float(score)
 
-    # Sort by highest score
     results.sort(
         key=lambda x: x["rerank_score"],
         reverse=True
@@ -46,5 +54,4 @@ def rerank_results(
 
     print("===================================\n")
 
-    # Return Top-K
     return results[:top_k]
